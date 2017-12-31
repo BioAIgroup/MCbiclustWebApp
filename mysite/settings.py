@@ -26,6 +26,7 @@ SECRET_KEY = '^g7^fsnd=cv9o13hgv)z+a%hsak!b-&etxyqhcof2in9&vdl&b'
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    'localhost',
     'mcbiclustweb.uksouth.cloudapp.azure.com',
 ]
 
@@ -84,6 +85,9 @@ DATABASES = {
         'PASSWORD': 'MCbiclust2017',
         'HOST': 'mcbiclustweb-dbserver.postgres.database.azure.com',
         'PORT': '5432',
+	'OPTIONS': {
+	    'sslmode': 'require',
+	},
     }
 }
 

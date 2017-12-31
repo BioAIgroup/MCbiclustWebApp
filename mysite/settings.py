@@ -26,7 +26,7 @@ SECRET_KEY = '^g7^fsnd=cv9o13hgv)z+a%hsak!b-&etxyqhcof2in9&vdl&b'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'mcbiclustweb.uksouth.cloudapp.azure.com',
+    'mcbiclustvm8197.cloudapp.net',
 ]
 
 

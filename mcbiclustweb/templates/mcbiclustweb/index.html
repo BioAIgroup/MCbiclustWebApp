@@ -1,0 +1,12 @@
+{% load staticfiles %}
+<script src="{% static 'mcbiclustweb/js/jquery-3.2.1.min.js' %}"></script>
+<script src="{% static 'mcbiclustweb/js/test.js' %}"></script>
+
+<h1>Hello! This is the MCbiclust home page.</h1>
+<form action="{% url 'mcbiclustweb:results' %}" method="post">
+    {% csrf_token %}
+    <input type="text" id="gem" name="gem"/>
+    <button type="submit" value="Run Script">Run Script 1</button>
+</form>
+<button id="run">Run Script 2</button>
+<p id="result"></p>

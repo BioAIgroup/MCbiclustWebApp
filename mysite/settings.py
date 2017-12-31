@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
-    'mcbiclustweb.uksouth.cloudapp.azure.com',
+    'mcbiclustvm8197.cloudapp.net',
 ]
 
 
@@ -85,9 +85,6 @@ DATABASES = {
         'PASSWORD': 'MCbiclust2017',
         'HOST': 'mcbiclustweb-dbserver.postgres.database.azure.com',
         'PORT': '5432',
-	'OPTIONS': {
-	    'sslmode': 'require',
-	},
     }
 }
 

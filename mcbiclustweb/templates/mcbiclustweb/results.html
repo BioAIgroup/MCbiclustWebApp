@@ -1,3 +1,14 @@
+{% extends 'mcbiclustweb/base.html' %}
+
+{% block content %}
+
 <h1>The GEM entered is {{ gem }}</h1>
 
 {{ seed }}
+
+<form action="{% url 'mcbiclustweb:index' %}" method="get">
+    {% csrf_token %}
+    <input type="submit" value="Go Back"/>
+</form>
+
+{% endblock %}

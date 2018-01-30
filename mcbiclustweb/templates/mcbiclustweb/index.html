@@ -1,12 +1,109 @@
-{% load staticfiles %}
-<script src="{% static 'mcbiclustweb/js/jquery-3.2.1.min.js' %}"></script>
-<script src="{% static 'mcbiclustweb/js/test.js' %}"></script>
+{% extends 'mcbiclustweb/base.html' %}
 
-<h1>Hello! This is the MCbiclust home page.</h1>
-<form action="{% url 'mcbiclustweb:results' %}" method="post">
-    {% csrf_token %}
-    <input type="text" id="gem" name="gem"/>
-    <button type="submit" value="Run Script">Run Script 1</button>
-</form>
-<button id="run">Run Script 2</button>
-<p id="result"></p>
+{% block content %}
+
+{% include "mcbiclustweb/navbar.html"%}
+<div class="container pt-5">
+    <h1>Hello {{ user.username }}! Welcome to the MCbiclust home page.</h1>
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist" style="margin-bottom:1rem;">
+            <a class="nav-item nav-link active" id="nav-create-tab" data-toggle="tab" href="#nav-create" role="tab" aria-controls="nav-create" aria-selected="true">Create Analysis</a>
+            <a class="nav-item nav-link" id="nav-analyses-tab" data-toggle="tab" href="#nav-analyses" role="tab" aria-controls="nav-analyses" aria-selected="false">Your Analyses</a>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-create" role="tabpanel" aria-labelledby="nav-create-tab">
+            <form id="uploadForm" action="{% url 'mcbiclustweb:results' %}" method="post" enctype="multipart/form-data" novalidate="">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="name">
+                        Analysis Name
+                        <small class="form-text text-muted">
+                            Choose a name for your analysis. The name must be under 100 characters long.
+                        </small>
+                    </label>
+                    <input id="name" class="form-control" name="name" maxlength="150" required="" type="text">
+                    <div class="invalid-feedback">
+                        Please provide a name.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">
+                        Description
+                        <small class="form-text text-muted">
+                            Describe your analysis. The description must be under 300 characters long.
+                        </small>
+                    </label>
+                    <textarea id="description" class="form-control" name="description" maxlength="300" required="" rows="3" type="text"></textarea>
+                    <div class="invalid-feedback">
+                        Please provide a description.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="gem">
+                        Gene Expression Matrix
+                        <small class="form-text text-muted">
+                            Please upload your gene expression matrix in text file format.
+                        </small>
+                    </label>
+                    <input id="gem" class="form-control" name="gem" required="" type="file">
+                    <div class="invalid-feedback">
+                        Please upload a gene expression matrix in .txt format.
+                    </div>
+                </div>
+                <hr class="mb-4">
+                <input class="btn btn-primary btn-lg btn-block" type="submit" name="submit" value="Submit">
+            </form>
+        </div>
+        <div class="tab-pane fade" id="nav-analyses" role="tabpanel" aria-labelledby="nav-analyses-tab">
+            <button id="run" class="btn btn-lg btn-primary">Run Script 2</button>
+            <p id="result"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('document').ready(function() {
+        function getExtension(fileName) {
+            var parts = fileName.split('.');
+            return parts[parts.length - 1];
+        }
+
+        var monitorUpload = false;
+        function validateUpload(event=null) {
+            monitorUpload = true;
+            var fileName = $('#gem').val()
+            if (getExtension(fileName) !== 'txt') {
+                $('#gem').parent().find('.invalid-feedback').css('display', 'block');
+                $('#gem').css('border-color', '#dc3545');
+                if (event !== null) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            } else {
+                $('#gem').parent().find('.invalid-feedback').css('display', 'none');
+                $('#gem').css('border-color', '#28a745');
+            }
+        }
+
+        var form = document.getElementById('uploadForm');
+        $('#uploadForm').submit(function( event ) {
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            validateUpload(event);
+
+            $('#uploadForm').addClass("was-validated");
+        });
+
+        $('#gem').change(function() {
+            console.log('change')
+            if (monitorUpload)
+                validateUpload();
+        });
+    });
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,24 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="padding-left:30px!important; padding-right:30px!important;">
+    <a class="navbar-brand" href="#">MCbiclust Web App</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mcbiclustNavbar" aria-controls="mcbiclustNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="mcbiclustNavbar">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Analyses <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Page 2</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Page 3</a>
+            </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0" action="{% url 'mcbiclustweb:logout' %}" method="get">
+            {% csrf_token %}
+            <button class="btn btn-light btn-outline-light my-2 my-sm-0" type="submit">Log out</button>
+        </form>
+    </div>
+</nav>

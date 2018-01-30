@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
-    'mcbiclustvm8197.cloudapp.net',
+    'mcbiclustweb.uksouth.cloudapp.azure.com',,
 ]
 
 

@@ -124,7 +124,7 @@
             var parts = fileName.split('\\');
             console.log(parts[parts.length - 1]);
             {% for analysis in analyses %}
-            if ("{{ analysis.gene_expr_mat }}" == parts[parts.length - 1]) {
+            if ("{{ analysis.gem }}" == parts[parts.length - 1]) {
                 return true;
             }
             {% endfor %}

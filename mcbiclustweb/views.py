@@ -13,6 +13,8 @@ from .forms import RegisterForm, CreateAnalysisForm
 
 from .tasks import *
 
+from django.contrib import messages 
+
 class RegisterFormView(View):
     form_class = RegisterForm
     template_name = 'mcbiclustweb/register.html'
@@ -63,34 +65,19 @@ class IndexView(View):
 
     def post(self, request):
         if request.user.is_authenticated:
-            form = self.form_class(request.POST)
-
+            form = self.form_class(request.POST, request.FILES)
+            print(form)
             if form.is_valid():
-                gem_file = request.FILES['gem']
                 analysis = form.save(commit=False)
-                analysis.gene_expr_mat = gem_file
                 analysis.user = Profile.objects.get(user=self.request.user)
                 analysis.status = "pending"
                 analysis.save()
 
-                self.store_dir(gem_file, analysis.user.id)
-
                 return redirect('mcbiclustweb:index')
+            else:
+                return render(request, 'mcbiclustweb/index.html', {'form':form})
         else:
             return redirect('mcbiclustweb:login')
-
-    def store_dir(self, gem_file, analysis_user):
-        analysis_dir = os.path.join(settings.BASE_DIR, 'analysis/', str(analysis_user))
-        try:
-            os.makedirs(analysis_dir)
-        except:
-            pass
-
-        dest_file = os.path.join(analysis_dir, gem_file.name)
-
-        with open(dest_file, 'wb+') as destination:
-            for chunk in gem_file.chunks():
-                destination.write(chunk)
 
 def analysis(request, analysis_id):
     a = Analysis.objects.get(id=analysis_id)

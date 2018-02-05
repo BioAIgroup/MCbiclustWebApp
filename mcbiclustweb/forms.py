@@ -22,4 +22,4 @@ class RegisterForm(UserCreationForm):
 class CreateAnalysisForm(ModelForm):
     class Meta:
         model = Analysis
-        exclude = ['gene_expr_mat', 'user', 'status']
+        fields = ['name', 'description', 'gem']

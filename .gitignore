@@ -1,5 +1,6 @@
 env/
 static/
+media/
 !mcbiclustweb/static/
 analysis/
 *.pyc

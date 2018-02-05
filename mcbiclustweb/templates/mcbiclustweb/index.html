@@ -5,6 +5,7 @@
 {% include "mcbiclustweb/navbar.html"%}
 <div class="container pt-5">
     <h1>Hello {{ user.username }}! Welcome to the MCbiclust home page.</h1>
+    {{form.errors}}
     <hr class="mb-4" style="border-top: 2px solid rgba(0, 0, 0, 0.1);">
     <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist" style="margin-bottom:1rem;">

@@ -4,9 +4,6 @@
 
 <body class="text-center page-login">
     <div class="container" >
-        {% if form.errors %}
-            <p>Your username and password didn't match. Please try again.</p>
-        {% endif %}
         <h1 class="h-3 my-5  font-weight-normal">MCbiclust Web App</h1>
         <br><br><br>
         <form class="form-login" action="{% url 'mcbiclustweb:login' %}" method="post">
@@ -16,6 +13,10 @@
             <input id="id_username" class="form-control" name="username" autofocus="" maxlength="150" required="" placeholder="Username" type="text">
             <label for="id_password" class="sr-only">Password</label>
             <input id="id_password" class="form-control" name="password" required="" placeholder="Password" type="password">
+            {% if form.errors %}
+                <p>Your username and password didn't match. Please try again.</p>
+            {% endif %}
+            <br>
             <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
         </form>
         <a href="{% url 'mcbiclustweb:register' %}">Register a new account</a>

@@ -1,0 +1,4 @@
+django
+psycopg2
+rpy2
+celery

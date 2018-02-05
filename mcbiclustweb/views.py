@@ -7,12 +7,14 @@ from django.contrib.auth import authenticate, login
 from django.views.generic import View
 import os
 
-from .forms import UserForm
+from mcbiclustweb.models import Profile, Analysis, Biclusters
 
-import rpy2.robjects as robjects
+from .forms import RegisterForm, CreateAnalysisForm
 
-class UserFormView(View):
-    form_class = UserForm
+from .tasks import *
+
+class RegisterFormView(View):
+    form_class = RegisterForm
     template_name = 'mcbiclustweb/register.html'
 
     # new user signing up
@@ -32,7 +34,7 @@ class UserFormView(View):
             
             # cleaned data
             username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
+            password = form.cleaned_data['password1']
             user.set_password(password)
             user.save()
 
@@ -45,36 +47,68 @@ class UserFormView(View):
                     return redirect('mcbiclustweb:index')
 
         return render(request, self.template_name, {'form': form})
-        
 
+class IndexView(View):
+    form_class = CreateAnalysisForm
+    template_name = 'mcbiclustweb/index.html'
 
-def index(request):
-    if request.user.is_authenticated:
-        return render(request, 'mcbiclustweb/index.html')
-    else:
-        return redirect('mcbiclustweb:login')
+    def get(self, request):
+        if request.user.is_authenticated:
+            # form = self.form_class(None)
+            profile = Profile.objects.get(user=self.request.user)
+            a = Analysis.objects.order_by('id').filter(user=profile)
+            return render(request, self.template_name, {'analyses': a})
+        else:
+            return redirect('mcbiclustweb:login')
 
-def results(request):
-    if len(request.FILES) != 0:
-        analysis_dir = os.path.join(settings.BASE_DIR, 'analysis/', str(request.user.id))
+    def post(self, request):
+        if request.user.is_authenticated:
+            form = self.form_class(request.POST)
+
+            if form.is_valid():
+                gem_file = request.FILES['gem']
+                analysis = form.save(commit=False)
+                analysis.gene_expr_mat = gem_file
+                analysis.user = Profile.objects.get(user=self.request.user)
+                analysis.status = "pending"
+                analysis.save()
+
+                self.store_dir(gem_file, analysis.user.id)
+
+                return redirect('mcbiclustweb:index')
+        else:
+            return redirect('mcbiclustweb:login')
+
+    def store_dir(self, gem_file, analysis_user):
+        analysis_dir = os.path.join(settings.BASE_DIR, 'analysis/', str(analysis_user))
         try:
             os.makedirs(analysis_dir)
         except:
             pass
-            
-        gem_file = request.FILES['gem']
+
         dest_file = os.path.join(analysis_dir, gem_file.name)
 
         with open(dest_file, 'wb+') as destination:
             for chunk in gem_file.chunks():
                 destination.write(chunk)
 
-        gem = "abc"
-        seed = "abc"
-        return render(request, 'mcbiclustweb/results.html', {'gem': gem, 'seed': seed})
-    else:
-        return redirect('mcbiclustweb:index')
+def analysis(request, analysis_id):
+    a = Analysis.objects.get(id=analysis_id)
+    return render(request, "mcbiclustweb/analysis.html", {'analysis': a})
+
+def start(request, analysis_id):
+    a = Analysis.objects.get(id=analysis_id)
+    a.status = "started"
+    a.save()
+    runFindSeed.delay(analysis_id)
+
+    return redirect('mcbiclustweb:analysis', analysis_id=analysis_id)
     
+def delete(request, analysis_id):
+    a = Analysis.objects.get(id=analysis_id)
+    a.delete()
+
+    return redirect('mcbiclustweb:index')
 
 def run(request):
     r = robjects.r

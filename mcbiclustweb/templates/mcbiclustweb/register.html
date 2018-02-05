@@ -6,15 +6,31 @@
     <div class="container" >
         <h1 class="h-3 my-5  font-weight-normal">MCbiclust Web App</h1>
         <br><br><br>
-        <form class="form-login" action="{% url 'mcbiclustweb:register' %}" method="post">
+        <form class="form-login" action="{% url 'mcbiclustweb:register' %}" method="post" autocomplete="false">
             {% csrf_token %}
             <h3 class="h-3 mb-3 font-weight-normal">Register</h3>
+            {{ form.non_field_errors }}
             <label for="id_email" class="sr-only">Email Address</label>
             <input id="id_email" class="form-control" name="email" autofocus="" maxlength="254" required="" placeholder="Email Address" type="text">
+            {% if form.email.errors %}
+                <p>{{ form.email.errors.0 }}</p>
+            {% endif %}
             <label for="id_username" class="sr-only">Username</label>
             <input id="id_username" class="form-control" name="username" autofocus="" maxlength="150" required="" placeholder="Username" type="text">
-            <label for="id_password" class="sr-only">Password</label>
-            <input id="id_password" class="form-control" name="password" maxlength="128" required="" placeholder="Password" type="password">
+            {% if form.username.errors %}
+                <p>{{ form.username.errors.0 }}</p>
+            {% endif %}
+            <label for="id_password1" class="sr-only">Password</label>
+            <input id="id_password1" class="form-control" name="password1" maxlength="128" required="" placeholder="Password" type="password">
+            {% if form.password1.errors %}
+                <p>{{ form.password1.errors.0 }}</p>
+            {% endif %}
+            <label for="id_password2" class="sr-only">Confirm Password</label>
+            <input id="id_password2" class="form-control" name="password2" maxlength="128" required="" placeholder="Confirm Password" type="password">
+            {% if form.password2.errors %}
+                <p>{{ form.password2.errors.0 }}</p>
+            {% endif %}
+            <br>
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign Up</button>
         </form>
         <a href="{% url 'mcbiclustweb:login' %}">Have an account?</a>

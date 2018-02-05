@@ -5,15 +5,66 @@
 {% include "mcbiclustweb/navbar.html"%}
 <div class="container pt-5">
     <h1>Hello {{ user.username }}! Welcome to the MCbiclust home page.</h1>
+    <hr class="mb-4" style="border-top: 2px solid rgba(0, 0, 0, 0.1);">
     <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist" style="margin-bottom:1rem;">
-            <a class="nav-item nav-link active" id="nav-create-tab" data-toggle="tab" href="#nav-create" role="tab" aria-controls="nav-create" aria-selected="true">Create Analysis</a>
-            <a class="nav-item nav-link" id="nav-analyses-tab" data-toggle="tab" href="#nav-analyses" role="tab" aria-controls="nav-analyses" aria-selected="false">Your Analyses</a>
+            <a class="nav-item nav-link active" id="nav-analyses-tab" data-toggle="tab" href="#nav-analyses" role="tab" aria-controls="nav-analyses" aria-selected="false">Your Analyses</a>
+            <a class="nav-item nav-link" id="nav-create-tab" data-toggle="tab" href="#nav-create" role="tab" aria-controls="nav-create" aria-selected="true">Create Analysis</a>
         </div>
     </nav>
     <div class="tab-content" id="nav-tabContent">
-        <div class="tab-pane fade show active" id="nav-create" role="tabpanel" aria-labelledby="nav-create-tab">
-            <form id="uploadForm" action="{% url 'mcbiclustweb:results' %}" method="post" enctype="multipart/form-data" novalidate="">
+        <div class="tab-pane fade show active" id="nav-analyses" role="tabpanel" aria-labelledby="nav-analyses-tab">
+            {% if analyses.count == 0 %}
+            <h2>You do not have any analyses. Create one in the 'Create Analysis' tab.</h2>
+            {% else %}
+            <div id="accordion">
+                {% for analysis in analyses %}
+                <div class="card">
+                    <div class="card-header" id="analysis{{ analysis.id }}">
+                        <h5 class="mb-0">
+                            <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{ analysis.id }}" aria-expanded="true" aria-controls="collapse{{ analysis.id }}">
+                                {{ analysis.name|title }}
+                            </button>
+                            <div style="float:right;">
+                                <form action="{% url 'mcbiclustweb:analysis' analysis.id %}" style="display:inline;margin-left:5px;margin-right:5px;">
+                                    <button class="btn btn-outline-primary" type="submit">View</button>
+                                </form>
+                                <form action="{% url 'mcbiclustweb:delete' analysis.id %}" style="display:inline;margin-left:5px;margin-right:5px;">
+                                    <button class="btn btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </h5>
+                    </div>
+              
+                    <div id="collapse{{ analysis.id }}" class="collapse" aria-labelledby="analysis{{ analysis.id }}" data-parent="#accordion">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label><b>Description</b></label>
+                                </div>
+                                <div class="col-md-9">
+                                    <p>{{ analysis.description }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label><b>Status</b></label>
+                                </div>
+                                <div class="col-md-9">
+                                    <p>{{ analysis.status|title }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% comment %} <button id="run" class="btn btn-lg btn-primary">Run Script 2</button>
+            <p id="result"></p> {% endcomment %}
+        </div>
+        <div class="tab-pane fade" id="nav-create" role="tabpanel" aria-labelledby="nav-create-tab">
+            <form id="uploadForm" action="{% url 'mcbiclustweb:index' %}" method="post" enctype="multipart/form-data" novalidate="">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="name">
@@ -43,21 +94,20 @@
                     <label for="gem">
                         Gene Expression Matrix
                         <small class="form-text text-muted">
-                            Please upload your gene expression matrix in text file format.
+                            Please upload your gene expression matrix in text file format. The matrix should have genes as rows and samples as columns.
                         </small>
                     </label>
                     <input id="gem" class="form-control" name="gem" required="" type="file">
-                    <div class="invalid-feedback">
+                    <div class="invalid-feedback" id="incorrectExt">
                         Please upload a gene expression matrix in .txt format.
+                    </div>
+                    <div class="invalid-feedback" id="gemExist">
+                        You already have a gene expression file with that name. Please rename your gene expression file.
                     </div>
                 </div>
                 <hr class="mb-4">
                 <input class="btn btn-primary btn-lg btn-block" type="submit" name="submit" value="Submit">
             </form>
-        </div>
-        <div class="tab-pane fade" id="nav-analyses" role="tabpanel" aria-labelledby="nav-analyses-tab">
-            <button id="run" class="btn btn-lg btn-primary">Run Script 2</button>
-            <p id="result"></p>
         </div>
     </div>
 </div>
@@ -69,26 +119,46 @@
             return parts[parts.length - 1];
         }
 
+        function checkGemExist(fileName) {
+            var parts = fileName.split('\\');
+            console.log(parts[parts.length - 1]);
+            {% for analysis in analyses %}
+            if ("{{ analysis.gene_expr_mat }}" == parts[parts.length - 1]) {
+                return true;
+            }
+            {% endfor %}
+        }
+
         var monitorUpload = false;
         function validateUpload(event=null) {
             monitorUpload = true;
             var fileName = $('#gem').val()
             if (getExtension(fileName) !== 'txt') {
-                $('#gem').parent().find('.invalid-feedback').css('display', 'block');
+                $('#incorrectExt').css('display', 'block');
+                $('#gemExist').css('display', 'none');
+                $('#gem').css('border-color', '#dc3545');
+                if (event !== null) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            } else if (checkGemExist(fileName)) {
+                $('#gemExist').css('display', 'block');
+                $('#incorrectExt').css('display', 'none');
                 $('#gem').css('border-color', '#dc3545');
                 if (event !== null) {
                     event.preventDefault();
                     event.stopPropagation();
                 }
             } else {
-                $('#gem').parent().find('.invalid-feedback').css('display', 'none');
+                $('#gemExist').css('display', 'none');
+                $('#incorrectExt').css('display', 'none');
                 $('#gem').css('border-color', '#28a745');
             }
         }
 
-        var form = document.getElementById('uploadForm');
+        var uploadForm = document.getElementById('uploadForm');
         $('#uploadForm').submit(function( event ) {
-            if (form.checkValidity() === false) {
+            if (uploadForm.checkValidity() === false) {
                 event.preventDefault();
                 event.stopPropagation();
             }

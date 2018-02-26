@@ -52,7 +52,15 @@
                                     <label><b>Status</b></label>
                                 </div>
                                 <div class="col-md-9">
-                                    <p>{{ analysis.status|title }}</p>
+                                    <p>{{ analysis.status|capfirst }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label><b>Date Created</b></label>
+                                </div>
+                                <div class="col-md-9">
+                                    <p>{{ analysis.date_started }}</p>
                                 </div>
                             </div>
                         </div>

@@ -5,7 +5,7 @@ from django.templatetags.static import static
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.views.generic import View
-import os
+import os, shutil
 
 from mcbiclustweb.models import Profile, Analysis, Biclusters
 
@@ -72,6 +72,12 @@ class IndexView(View):
                 analysis.user = Profile.objects.get(user=self.request.user)
                 analysis.status = "pending"
                 analysis.save()
+                analysis.gem = request.FILES['gem']
+                analysis.save()
+                try:
+                    shutil.rmtree(os.path.join(settings.MEDIA_ROOT, 'analyses/user_{0}/None'.format(analysis.user.id)))
+                except:
+                    pass
 
                 return redirect('mcbiclustweb:index')
             else:
@@ -84,10 +90,18 @@ def analysis(request, analysis_id):
     return render(request, "mcbiclustweb/analysis.html", {'analysis': a})
 
 def start(request, analysis_id):
-    a = Analysis.objects.get(id=analysis_id)
-    a.status = "started"
-    a.save()
-    runFindSeed.delay(analysis_id)
+    # a = Analysis.objects.get(id=analysis_id)
+    # a.status = "started"
+    # a.save()
+
+    seed_size = int(request.POST['seedSize'])
+    init_seed = request.POST['initSeed']
+    iterations = int(request.POST['iterations'])
+    num_runs = int(request.POST['numRuns'])
+    geneset_file = request.FILES['geneset']
+    geneset = geneset_file.read().decode("utf-8").split(',')
+
+    runFindSeed.delay(analysis_id, seed_size, init_seed, geneset, iterations, num_runs)
 
     return redirect('mcbiclustweb:analysis', analysis_id=analysis_id)
     

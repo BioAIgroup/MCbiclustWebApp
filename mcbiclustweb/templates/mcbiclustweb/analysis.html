@@ -21,13 +21,21 @@
                 <label><b>Status</b></label>
             </div>
             <div class="col-md-9">
-                <p>{{ analysis.status|title }}</p>
+                <p>{{ analysis.status|capfirst }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <label><b>Date Started</b></label>
+            </div>
+            <div class="col-md-9">
+                <p>{{ analysis.date_started }}</p>
             </div>
         </div>
         <hr class="mb-2">
-        {% if analysis.status == "pending" %}
+        {% if analysis.status == "pending" or 'failed' in analysis.status %}
         <div>
-            <form id="startAnalysisForm" action="{% url 'mcbiclustweb:start' analysis.id %}" method="POST" novalidate="">
+            <form id="startAnalysisForm" action="{% url 'mcbiclustweb:start' analysis.id %}" method="POST" enctype="multipart/form-data" novalidate="">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="seedSize">
@@ -48,9 +56,21 @@
                             Enter the initial sample seed separate by commas only. Note that if the number of initial sample seeds specified is not equal to Sample Seed Size, the algorithm will choose a random inital seed instead. (Optional)
                         </small>
                     </label>
-                    <input id="initSeed" class="form-control" name="initSeed" type="text">
+                    <textarea id="initSeed" class="form-control" name="initSeed" row="3" type="text"></textarea>
                     <div id="incorrectFormat" class="invalid-feedback">
-                        Please verify the format you have entered is correct.
+                        Please verify that the number of initial seeds entered is equal to the seed size specified above.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="geneset">
+                        Geneset of Interest
+                        <small class="form-text text-muted">
+                            Please upload a text file with the genes separate by commas only. Please use the gene names from the gene expression matrix. Use no more than 500 genes.
+                        </small>
+                    </label>
+                    <input id="geneset" class="form-control" name="geneset" required="" type="file">
+                    <div id="incorrectExt" class="invalid-feedback">
+                        Please.
                     </div>
                 </div>
                 <div class="form-group">
@@ -86,23 +106,44 @@
 
 <script>
     $('document').ready(function() {
+        function getExtension(fileName) {
+            var parts = fileName.split('.');
+            return parts[parts.length - 1];
+        }
+
+        var monitorUpload = false;
+        function validateUpload(event=null) {
+            monitorUpload = true;
+            var fileName = $('#geneset').val()
+            if (getExtension(fileName) !== 'txt') {
+                $('#incorrectExt').css('display', 'block');
+                $('#geneset').css('border-color', '#dc3545');
+                if (event !== null) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            } else {
+                $('#incorrectExt').css('display', 'none');
+                $('#geneset').css('border-color', '#28a745');
+            }
+        }
         var monitorInitSeed = false;
         function validateInitSeed(event=null) {
             monitorInitSeed = true;
             var initSeeds = $('#initSeed').val().split(',');
-            for (var i = 0; i < initSeeds.length; i++) {
-                if (isNaN(initSeeds[i])) {
-                    $('#incorrectFormat').css('display', 'block');
-                    $('#initSeed').css('border-color', '#dc3545');
-                    if (event !== null) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    break;
-                } else {
-                    $('#incorrectFormat').css('display', 'none');
-                    $('#initSeed').css('border-color', '#28a745');
+            if (initSeeds[initSeeds.length - 1] == "")
+                initSeeds.pop();
+            var seedSize = $('#seedSize').val();
+            if (seedSize != initSeeds.length) {
+                $('#incorrectFormat').css('display', 'block');
+                $('#initSeed').css('border-color', '#dc3545');
+                if (event !== null) {
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
+            } else {
+                $('#incorrectFormat').css('display', 'none');
+                $('#initSeed').css('border-color', '#28a745');
             }
         }
 
@@ -112,15 +153,21 @@
                 event.preventDefault();
                 event.stopPropagation();
             }
-            validateInitSeed(event);
+            validateUpload(event);
+            if ($('#initSeed').val() != "")
+                validateInitSeed(event);
 
             $('#startAnalysisForm').addClass("was-validated");
         });
 
-        $('#initSeed').keydown(function() {
+        $('#initSeed').keyup(function() {
             console.log('change')
-            if (monitorInitSeed)
-                validateInitSeed();
+            if ($('#initSeed').val() != "")
+                validateInitSeed(event);
+        });
+        $('#geneset').change(function() {
+            if (monitorUpload)
+                validateUpload();
         });
     });
 </script>

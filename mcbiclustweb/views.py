@@ -65,7 +65,7 @@ class IndexView(View):
 
     def post(self, request):
         if request.user.is_authenticated:
-            form = self.form_class(request.POST, request.FILES)
+            form = self.form_class(request.POST)
             print(form)
             if form.is_valid():
                 analysis = form.save(commit=False)
@@ -74,10 +74,10 @@ class IndexView(View):
                 analysis.save()
                 analysis.gem = request.FILES['gem']
                 analysis.save()
-                try:
-                    shutil.rmtree(os.path.join(settings.MEDIA_ROOT, 'analyses/user_{0}/None'.format(analysis.user.id)))
-                except:
-                    pass
+                # try:
+                #     shutil.rmtree(os.path.join(settings.MEDIA_ROOT, 'analyses/user_{0}/None'.format(analysis.user.id)))
+                # except:
+                #     pass
 
                 return redirect('mcbiclustweb:index')
             else:

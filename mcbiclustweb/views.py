@@ -70,7 +70,7 @@ class IndexView(View):
             if form.is_valid():
                 analysis = form.save(commit=False)
                 analysis.user = Profile.objects.get(user=self.request.user)
-                analysis.status = "pending"
+                analysis.status = "1. Preprocessing"
                 analysis.save()
                 analysis.gem = request.FILES['gem']
                 analysis.save()
@@ -78,6 +78,7 @@ class IndexView(View):
                 #     shutil.rmtree(os.path.join(settings.MEDIA_ROOT, 'analyses/user_{0}/None'.format(analysis.user.id)))
                 # except:
                 #     pass
+                preprocess.delay(analysis.id)
 
                 return redirect('mcbiclustweb:index')
             else:
@@ -87,12 +88,25 @@ class IndexView(View):
 
 def analysis(request, analysis_id):
     a = Analysis.objects.get(id=analysis_id)
-    return render(request, "mcbiclustweb/analysis.html", {'analysis': a})
+    status = int(a.status.split('.')[0])
+    fig_dir_url = os.path.join(settings.MEDIA_URL, *a.gem.name.split("/")[:-1])
+    fig_dir_root = os.path.join(settings.MEDIA_ROOT, *a.gem.name.split("/")[:-1])
+    
+    nbiclusters = 0
+    chars = []
+    if status >= 11:
+        nbiclusters = sum(os.path.isdir(os.path.join(fig_dir_root, i)) for i in os.listdir(fig_dir_root))
+
+        fork_dir = os.path.join(fig_dir_root, "1")
+        for i in os.listdir(fork_dir):
+            chars.append(i[9:-4])
+    
+    return render(request, "mcbiclustweb/analysis.html", {'analysis': a, 'status': status, 'fig_dir': fig_dir_url, 'nbiclusters': range(1, nbiclusters + 1), 'chars': chars})
 
 def start(request, analysis_id):
-    # a = Analysis.objects.get(id=analysis_id)
-    # a.status = "started"
-    # a.save()
+    a = Analysis.objects.get(id=analysis_id)
+    a.status = "3. Started analysis"
+    a.save()
 
     seed_size = int(request.POST['seedSize'])
     init_seed = request.POST['initSeed']
@@ -107,7 +121,13 @@ def start(request, analysis_id):
     
 def delete(request, analysis_id):
     a = Analysis.objects.get(id=analysis_id)
+    user_id = a.user.id
     a.delete()
+
+    try:
+        shutil.rmtree(os.path.join(settings.MEDIA_ROOT, 'analyses/user_{0}/{1}'.format(user_id, analysis_id)))
+    except:
+        pass
 
     return redirect('mcbiclustweb:index')
 

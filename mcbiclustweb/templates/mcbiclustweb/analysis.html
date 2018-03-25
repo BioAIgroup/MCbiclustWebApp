@@ -18,6 +18,14 @@
         </div>
         <div class="row">
             <div class="col-md-3">
+                <label><b>Characteristic Plots Possible</b></label>
+            </div>
+            <div class="col-md-9">
+                <p>{{ analysis.char_ok }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
                 <label><b>Status</b></label>
             </div>
             <div class="col-md-9">
@@ -32,8 +40,9 @@
                 <p>{{ analysis.date_started }}</p>
             </div>
         </div>
+        {% if status < 3 and status != 1 or status == 12 %}
         <hr class="mb-2">
-        {% if analysis.status == "pending" or 'failed' in analysis.status %}
+        <h2 class="my-3">{% if status < 0 or status == 12 %}Retart{% else %}Start{% endif %} Analysis</h2>  
         <div>
             <form id="startAnalysisForm" action="{% url 'mcbiclustweb:start' analysis.id %}" method="POST" enctype="multipart/form-data" novalidate="">
                 {% csrf_token %}
@@ -101,11 +110,108 @@
             </form>
         </div>
         {% endif %}
+        {% if status >= 7 or status == -4 %}
+        <hr class="mb-2">
+        <h2 class="my-3">Visualisation</h2>   
+        <div id="accordion">
+            {% if status >= 7 or status == -4 %}
+            <div class="card">
+                <div class="card-header" id="headingOne">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    Correlation Heatmap
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    <img src="{{ fig_dir }}/cor_heatmap.png" alt="Correlation Heatmap" width="80%" class="my-fig">
+                </div>
+            </div>
+            {% endif %}
+            {% if status >= 8 %}
+            <div class="card">
+                <div class="card-header" id="headingTwo">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Silhouette Analysis
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                <div class="card-body">
+                    <img src="{{ fig_dir }}/sil_clust01.png" alt="Correlation Heatmap" width="80%" class="my-fig">
+                    <br><br>
+                    <img src="{{ fig_dir }}/sil_clust02.png" alt="Correlation Heatmap" width="80%" class="my-fig">
+                </div>
+            </div>
+            {% endif %}
+            {% if status >= 9 %}
+            <div class="card">
+                <div class="card-header" id="headingThree">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                    CVPlot
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                <div class="card-body">
+                    <img src="{{ fig_dir }}/cvplot.png" alt="Correlation Heatmap" width="80%" class="my-fig">
+                </div>
+            </div>
+            {% endif %}
+            {% if status >= 11 and analysis.char_ok %}
+            <div class="card">
+                <div class="card-header" id="headingFour">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                    Characteritiscs Fork Plot
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label for="bicluster">Select Bicluster</label>
+                            <select id="bicluster" class="custom-select d-block w-100">
+                                {% for b in nbiclusters %}
+                                <option value="{{ b }}">{{ b }}</option>
+                                {% endfor %}
+                            </select> 
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label for="characteristic">Select Characteristic</label>
+                            <select id="characteristic" class="custom-select d-block w-100">
+                                {% for char in chars %}
+                                <option value="{{ char }}">{{ char }}</option>
+                                {% endfor %}
+                            </select> 
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="select">&nbsp;</label>
+                            <button id="selectFork" class="btn d-block w-100">Select</button>
+                        </div>
+                    </div>
+                    <img id="forkPlot" class="my-fig" src="{{ fig_dir }}/{{ nbiclusters.0 }}/forkplot_{{ chars.0 }}.png" width="80%">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <script>
     $('document').ready(function() {
+        $("#selectFork").click(function() {
+            bicluster = $("#bicluster option:selected" ).text();
+            char = $("#characteristic option:selected" ).text();
+            forkUrl = "{{ fig_dir }}/" + bicluster + "/forkplot_" + char + ".png"
+            $("#forkPlot").attr("src", forkUrl)
+        });
+
         function getExtension(fileName) {
             var parts = fileName.split('.');
             return parts[parts.length - 1];

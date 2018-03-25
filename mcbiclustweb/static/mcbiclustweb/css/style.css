@@ -51,3 +51,10 @@
 .form-login p {
     margin-top: 5px;
 }
+
+.my-fig {
+    border-width: 10px;
+    border-color: #E8E8E8;
+    border-style: solid;
+    border-radius: 1rem;
+}

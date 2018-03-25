@@ -19,6 +19,7 @@ class Analysis(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=300)
     gem = models.FileField(upload_to=user_directory_path, blank=True)
+    char_ok = models.BooleanField(default=True)
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     status = models.CharField(max_length=200)
     date_started = models.DateTimeField(auto_now_add=True)

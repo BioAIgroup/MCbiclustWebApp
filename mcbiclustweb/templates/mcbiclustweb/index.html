@@ -24,7 +24,7 @@
                     <div class="card-header" id="analysis{{ analysis.id }}">
                         <h5 class="mb-0">
                             <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{ analysis.id }}" aria-expanded="true" aria-controls="collapse{{ analysis.id }}">
-                                {{ analysis.name|title }}
+                                {{ analysis.name|capfirst }}
                             </button>
                             <div style="float:right;">
                                 <form action="{% url 'mcbiclustweb:analysis' analysis.id %}" style="display:inline;margin-left:5px;margin-right:5px;">

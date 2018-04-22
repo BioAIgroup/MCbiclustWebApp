@@ -3,3 +3,4 @@ psycopg2
 rpy2
 celery
 django-cleanup
+numpy

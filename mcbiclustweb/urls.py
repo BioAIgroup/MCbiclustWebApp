@@ -12,5 +12,4 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(template_name='mcbiclustweb/logout.html'), name='logout'),
     path('analysis/<int:analysis_id>/start', views.start, name="start"),
     path('analysis/<int:analysis_id>/delete', views.delete, name="delete"),
-    path('run/', views.run, name="run"),
 ]

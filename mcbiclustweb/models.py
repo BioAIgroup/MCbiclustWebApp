@@ -23,7 +23,3 @@ class Analysis(models.Model):
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     status = models.CharField(max_length=200)
     date_started = models.DateTimeField(auto_now_add=True)
-
-class Biclusters(models.Model):
-    analysis = models.ForeignKey(Analysis, on_delete=models.CASCADE)
-    biclusters = models.CharField(max_length=100)

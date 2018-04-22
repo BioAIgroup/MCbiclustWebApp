@@ -1,8 +1,0 @@
-library(MCbiclust)
-library(GEOquery)
-library(ggplot2)
-library(gplots)
-library(dplyr)
-library(gProfileR)
-library(MASS)
-library(devtools)

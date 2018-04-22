@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login
 from django.views.generic import View
 import os, shutil
 
-from mcbiclustweb.models import Profile, Analysis, Biclusters
+from mcbiclustweb.models import Profile, Analysis
 
 from .forms import RegisterForm, CreateAnalysisForm
 
@@ -130,22 +130,4 @@ def delete(request, analysis_id):
         pass
 
     return redirect('mcbiclustweb:index')
-
-def run(request):
-    r = robjects.r
-    script_dir = os.path.join(settings.STATIC_ROOT, 'mcbiclustweb/scripts/myscript.R')
-    
-    r.library('MCbiclust')
-    r.library('ggplot2')
-    r.library('gplots')
-    r.library('dplyr')
-    r.library('gProfileR')
-    r.library('MASS')
-    r.library('devtools')
-
-    r.data('CCLE_small')
-    r.data('Mitochondrial_genes')
-    r.source(script_dir)
-    seed = r['CCLE.seed']
-    return HttpResponse(seed)
 

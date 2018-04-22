@@ -5,7 +5,7 @@ import random
 import numpy as np
 from math import ceil
 
-from mcbiclustweb.models import Profile, Analysis, Biclusters
+from mcbiclustweb.models import Profile, Analysis
 
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
@@ -144,6 +144,7 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
 
     gem = ro.r['read.csv'](os.path.join(fig_dir, 'gem.csv'), header=True, sep=" ")
 
+    # Check that gene expression matrix contains the genes in gene set of interest 
     for x in geneset:
         if x not in np.array(ro.r.rownames(gem)):
             print(x)
@@ -152,10 +153,6 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
             return "geneset of interest contains genes that are either not in the series matrix or have NA or 0 as value"
 
     gem_sub = gem.rx(ro.StrVector(geneset), True)
-    # Choose at most 500 genes randomly to perform FindSeed on
-    # gem_num_genes = min(500, gem.nrow)
-    # gem_genes = ri.IntSexpVector(random.sample(list(range(1, gem.nrow + 1)), gem_num_genes))
-    # gem_sub = gem.rx(gem_genes, True)
 
     # Checks if the seed size user inputed is bigger than the number of samples in GEM
     if gem.ncol < seed_size:
@@ -354,10 +351,6 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
     print("Plotted forks")
     a.status = "11. Started analysis: plotted forks"
     a.save()
-
-    # biclusters = ','.join(map(str, list(seed)))
-    # b = Biclusters(analysis=a, biclusters=biclusters)
-    # b.save()
 
     a.status = "12. Analysis completed"
     a.save()

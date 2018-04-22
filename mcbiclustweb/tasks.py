@@ -3,6 +3,7 @@ from django.conf import settings
 import os
 import random
 import numpy as np
+from math import ceil
 
 from mcbiclustweb.models import Profile, Analysis, Biclusters
 
@@ -24,22 +25,36 @@ def preprocess(analysis_id):
     base = importr('base')
     geoquery = importr('GEOquery')
 
+    # Check if file starts with !Series_title, otherwise getGEO never stops
+    with open(gem_dir) as f:
+        first_line = f.readline()
+    if not first_line[:14].startswith("!Series_title\t"):
+        a.status = "-2. Preprocessing failed: invalid gene expression matrix format"
+        a.save()
+        return "invalid gene expression matrix format"
+
     # Get GEO series matrix and extract GEM
-    gsm = geoquery.getGEO(filename=gem_dir, getGPL=False)
+    try:
+        gsm = geoquery.getGEO(filename=gem_dir, getGPL=False)
+    except:
+        a.status = "-2. Preprocessing failed: invalid gene expression matrix format"
+        a.save()
+        return "invalid gene expression matrix format"
+
     try:
         gem = gsm.slots['assayData']['exprs']
         # Remove any genes with NAs
         row_keep = ro.IntVector(np.argwhere(np.array(ro.r.rowSums(ro.r['is.na'](gem))) == 0) + 1)
         gem = gem.rx(row_keep, True)
-        # Remove anay genes with all 0s
+        # Remove any genes with all 0s
         row_keep = ro.IntVector(np.nonzero(np.array(ro.r.rowSums(gem)))[0] + 1)
         gem = gem.rx(row_keep, True)
         # Write to CSV
         ro.r['write.table'](gem, file=os.path.join(store_dir, 'gem.csv'))
     except:
-        a.status = "-2. Preprocessing failed: your gene expression matrix may not be suitable for analysis"
+        a.status = "-2. Preprocessing failed: invalid gene expression matrix format"
         a.save()
-        return "your gene expression matrix may not be suitable for analysis"
+        return "invalid gene expression matrix format"
 
     try:
         # Get pheno data
@@ -144,9 +159,9 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
 
     # Checks if the seed size user inputed is bigger than the number of samples in GEM
     if gem.ncol < seed_size:
-        a.status = "-1. Failed: seed size bigger than sample number"
+        a.status = "-1. Failed: sample seed size bigger than sample number"
         a.save()
-        return "seed size bigger than number of samples"
+        return "sample seed size bigger than number of samples"
     # Checks if one of the initial seeds specified is bigger than the number of samples in GEM
     init_seed_specified = False
     if init_seed != "":
@@ -156,9 +171,9 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
         for s in temp:
             print(s)
             if s not in np.array(ro.r.colnames(gem)):
-                a.status = "-1. Failed: one initial seed is not in gene expression matrix"
+                a.status = "-1. Failed: one initial seed sample is not in gene expression matrix"
                 a.save()
-                return "one initial seed is not in gene expression matrix"
+                return "one initial seed sample is not in gene expression matrix"
         init_seed = []
         for s in temp:
             print(np.where(np.array(ro.r.colnames(gem))==s))
@@ -230,9 +245,9 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
         multi_clust_group = mcbiclust.SilhouetteClustGroups(**params)
         grdevices.dev_off()
     except:
-        a.status = "-4. Failed: error finding clusters, your gene expression matrix may not be suitable for analysis"
+        a.status = "-4. Failed: error finding distinct biclusters, your gene expression matrix may not be suitable for analysis"
         a.save()
-        return "error finding clusters, your gene expression matrix may not be suitable for analysis"
+        return "error finding distinct biclusters, your gene expression matrix may not be suitable for analysis"
     print("Plotted silhouette")
     a.status = "8. Started analysis: plotted silhouette"
     a.save()
@@ -283,16 +298,21 @@ def runFindSeed(analysis_id, seed_size, init_seed, geneset, iterations, num_runs
     # Calculate PC1 values and threshold new biclusters
     multi_pc1_vec = ro.ListVector({})
     multi_bic = ro.ListVector({})
-    for i in range(ro.r.length(multi_prep.rx2(1))[0]):
-        # Calculate PC1
-        params = {'top.gem': multi_prep.rx2(1).rx2(i + 1), 'seed.sort': multi_samp_sort.rx2(i + 1), 'n': 10}
-        multi_pc1_vec.rx2[i + 1] = mcbiclust.PC1VecFun(**params)
-        # Threshold biclusters
-        params = {'cor.vec': average_corvec.rx2(i + 1), 'sort.order': multi_samp_sort.rx2(i + 1), 'pc1': multi_pc1_vec.rx2(i + 1), 'samp.sig': 0.05}
-        multi_bic.rx2[i + 1] = mcbiclust.ThresholdBic(**params)
-        # Align PC1
-        params = {'gem': gem, 'pc1': multi_pc1_vec.rx2(i + 1), 'sort.order': multi_samp_sort.rx2(i + 1), 'cor.vec': average_corvec.rx2(i + 1), 'bic': multi_bic.rx2(i + 1)}
-        multi_pc1_vec.rx2[i + 1] = mcbiclust.PC1Align(**params)
+    try:
+        for i in range(ro.r.length(multi_prep.rx2(1))[0]):
+            # Calculate PC1
+            params = {'top.gem': multi_prep.rx2(1).rx2(i + 1), 'seed.sort': multi_samp_sort.rx2(i + 1), 'n': min(ceil(ro.r.ncol(gem)[0]/20), 10)}
+            multi_pc1_vec.rx2[i + 1] = mcbiclust.PC1VecFun(**params)
+            # Threshold biclusters
+            params = {'cor.vec': average_corvec.rx2(i + 1), 'sort.order': multi_samp_sort.rx2(i + 1), 'pc1': multi_pc1_vec.rx2(i + 1), 'samp.sig': 0.05}
+            multi_bic.rx2[i + 1] = mcbiclust.ThresholdBic(**params)
+            # Align PC1
+            params = {'gem': gem, 'pc1': multi_pc1_vec.rx2(i + 1), 'sort.order': multi_samp_sort.rx2(i + 1), 'cor.vec': average_corvec.rx2(i + 1), 'bic': multi_bic.rx2(i + 1)}
+            multi_pc1_vec.rx2[i + 1] = mcbiclust.PC1Align(**params)
+    except:
+        a.status = "-5. Failed: error extending distinct biclusters, please try to restart the analysis. If this error is shown repeatedly, your gene expression matrix may not be suitable for analysis"
+        a.save()
+        return "error extending distinct biclusters, please try to restart the analysis. If this error is shown repeatedly, your gene expression matrix may not be suitable for analysis"
 
     multi_df_args = ro.ListVector({})
     multi_df_args.rx2['gene.name'] = ro.r.colnames(gem)

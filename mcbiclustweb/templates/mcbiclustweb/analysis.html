@@ -42,7 +42,7 @@
         </div>
         {% if status < 3 and status != 1 and status != -2 or status == 12 %}
         <hr class="mb-2">
-        <h2 class="my-3">{% if status < 0 or status == 12 %}Retart{% else %}Start{% endif %} Analysis</h2>  
+        <h2 class="my-3">{% if status < 0 or status == 12 %}Restart{% else %}Start{% endif %} Analysis</h2>  
         <div>
             <form id="startAnalysisForm" action="{% url 'mcbiclustweb:start' analysis.id %}" method="POST" enctype="multipart/form-data" novalidate="">
                 {% csrf_token %}
